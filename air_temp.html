@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+</head>
+<title>Monthly Avg. Temperature - Climate Division 4, Indiana</title>
+<link rel="icon" 
+      type="image/png" 
+      href="./favicon.png">
+<style> /* set the CSS */
+
+body { font: 12px Arial;}
+
+path { 
+    stroke: steelblue;
+    stroke-width: 2;
+    fill: none;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+div.tooltip {
+    position: absolute;    
+    text-align: center;    
+    width: 60px;    
+    height: 28px;        
+    padding: 2px;    
+    font: 12px sans-serif;    
+    background: lightsteelblue;    
+    border: 0px;                    
+    border-radius: 8px;
+  /*  pointer-events: none;    This line needs to be removed */
+    
+}
+.label {
+  fill: #777;
+}
+
+</style>
+<header>
+  <aside>December 12, 2018</aside>
+  <a href="https://gmallya.com" rel="author">Ganesh Mallya</a>
+</header>
+<body>
+<h1>Monthly Avg. Temperature - Climate Division 4, Indiana</h1>
+<div class="row">
+	<div class="col-md-8" id="draw_area">
+		<svg></svg>
+	</div>
+	<div class="col-md-4" id="draw_area2">
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-2">
+		<form>
+			<div class="form-group">
+			  <label for="selector">Change month here:</label>
+			  <select class="form-control" id="selector">
+			  </select>
+			</div>
+		</form>
+		<!-- Change month here <select id="selector"></select>-->
+	</div>
+	<div class="col-md-4">
+	</div>
+	<div class="col-md-6">
+		Click on data points for annotation.
+	</div>
+	
+</div>
+<!-- load the d3.js library -->    
+<script type=
+    "text/javascript" src="http://d3js.org/d3.v3.min.js">
+</script>
+
+
+<script>
+
+// Set the dimensions of the canvas / graph
+var margin = {top: 30, right: 60, bottom: 30, left: 50},
+    width = document.getElementById('draw_area').offsetWidth - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// Parse the date / time
+var parseDate = d3.time.format("%Y-%-m").parse;
+var formatTime = d3.time.format("%e %B");// Format tooltip date / time
+var getMonth = d3.time.format("%e");// Format select options
+// Set the ranges
+var x = d3.time.scale().range([0, width]);
+var y = d3.scale.linear().range([height, 0]);
+
+// Define the axes
+var xAxis = d3.svg.axis().scale(x)
+    .orient("bottom").ticks(5);
+
+var yAxis = d3.svg.axis().scale(y)
+    .orient("left").ticks(5);
+
+// Define the line
+var valueline = d3.svg.line()
+    .x(function(d) { return x(d.Year); })
+    .y(function(d) { return y(+d.AvgTempDegF); });
+
+// Define 'div' for tooltips
+var div = d3.select("body")
+    .append("div")  // declare the tooltip div 
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+// Adds the svg canvas
+var svg = d3.select("svg")
+		.attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+		.append("g")
+			.attr("transform", 
+				  "translate(" + margin.left + "," + margin.top + ")");
+
+// Get the data
+d3.csv("air_temp_long_term.csv", function(error, data) {
+    data.forEach(function(d) {
+		//console.log(d);
+		d.Mon = +d.Mon;
+		d.Yr = +d.Yr;
+        d.Year = parseDate(d.Year);
+        d.AvgTempDegF = +d.AvgTempDegF;
+		
+    });
+	//console.log(data.length);
+	
+	//Populate the dropdown options within the selector.
+	var monTemp = d3.nest().key(function(d){return d.Mon}).entries(data);
+	//console.log(monTemp);
+	var selector = d3.select("#selector");
+	selector.selectAll("option")
+			.data(monTemp)
+			.enter()
+			.append("option")
+				.text(function(d){return d.key;})
+				.attr("value", function(d){return d.key;});
+				
+    // Scale the range of the data
+    x.domain(d3.extent(data, function(d) { return d.Year; }));
+    y.domain([0, d3.max(data, function(d) { return +d.AvgTempDegF; })]);
+
+    // Add the valueline path.
+    //svg.append("path")
+    //    .attr("class", "line")
+    //    .attr("d", valueline(data));
+	function drawCircles(data,value){
+		var filtered_data = data.filter(function(d){return d.Mon == value}).sort(function(a,b) {
+							  return a.AvgTempDegF - b.AvgTempDegF;
+							});
+		
+		var plotData = filtered_data.map(function(d,i) {
+
+			  return {
+				AvgTempDegF: d.AvgTempDegF,
+				index: i + 1,
+				Year: d.Year,
+				Mon: d.Mon,
+				Yr: d.Yr
+			  };
+			});
+		//console.log(filtered_data.length);
+		
+		var colors = d3.scale.threshold().range(["#3344bb","#1199ff","#00b7a3", "black","#ffee11", "#ff7632", "#f22500"])
+			.domain([1.01, 2.01, 3.01,plotData.length-2.01, plotData.length-1.01,plotData.length]);
+		console.log(JSON.stringify(plotData));
+		
+		var monthLabel = ["January","February","March","April","May","June","July","August","September",
+			"October","November","December"];
+			
+		svg.selectAll("circle").remove();
+		var circles = svg.selectAll("circle").data(plotData);
+		
+		//console.log(circles);
+		circles.enter().append("circle") // add new circles needed
+			.filter(function(d){return d.Mon == value})
+			.attr("r", 4)
+			.attr("opacity",1)
+			.attr("cx", function(d) { return x(d.Year); })         
+			.attr("cy", function(d) { return y(d.AvgTempDegF); })
+			.attr("fill", function(d){ return colors(d.index)})
+			// Tooltip stuff after this
+			.on("click", function(d) {    
+				//console.log(d3.select(this));
+				div.transition()
+					.duration(20)    
+					.style("opacity", .9);    
+				div.html(
+						//'<a href= "gmallya.com" target="_blank">' + //with a link
+						//formatTime(d.Year) +
+						//"</a>" +
+						//"<br/>"  + 
+						d.AvgTempDegF + " F, " + d.Yr) //"," + d.Mon)     
+					.style("left", (d3.event.pageX) + "px")             
+					.style("top", (d3.event.pageY - 28) + "px");
+				d3.select(this)
+					.attr({
+						fill: "#399c39",
+						r: 10
+					});
+				//.append("text")
+				//.attr("class","tmp_data")
+				//.text(d.AvgTempDegF);
+				})
+			.on("mouseout",function(d){
+				div.transition()
+					.duration(1000)    
+					.style("opacity", 0);
+				d3.select(this).transition()
+					.duration(1000)
+					.attr("r",4)
+					.attr("fill", function(d){ return colors(d.index)});
+			}); // Circles.enter chain ends here
+			
+			// Add Month label to the chart.
+			//var chart_label = svg.selectAll("text").filter(".chart-label");
+			//chart_label.remove;
+			svg.selectAll(".chart-label").remove();
+			svg.append("text")
+				.attr("class", "chart-label")
+				.attr("text-anchor", "end")
+				.attr("y", 6)
+				.attr("x",width/2)
+				.attr("dy", ".75em")
+				.style("font-size","200%")
+				.text(monthLabel[value-1]);
+	}
+	
+	// Draw circles for January (initial view when the page loads)
+	drawCircles(data,1);
+    
+	// update the scatterplot based on user selected Month from the drop down. Default choice will be January.
+	selector
+		.on("change",function(){
+			var value = selector.property("value");
+			drawCircles(data,value);	
+		});//select "on change ends here"
+		
+	// Add the X Axis
+	svg.append("g")    
+		.attr("class", "x axis")
+		.attr("transform", "translate(0," + height + ")")
+		.call(xAxis);
+
+	// Add the Y Axis
+	svg.append("g")    
+		.attr("class", "y axis")
+		.call(yAxis);
+		
+	// Add an x-axis label.
+	svg.append("text")
+		.attr("class", "x label")
+		.attr("text-anchor", "end")
+		.attr("x", width-30)
+		.attr("y", height - 6)
+		.style("font-size","150%")
+		.text("Years");
+		
+	// Add a y-axis label.
+	svg.append("text")
+		.attr("class", "y label")
+		.attr("text-anchor", "end")
+		.attr("y", 6)
+		.attr("dy", ".75em")
+		.style("font-size","150%")
+		.attr("transform", "rotate(-90)")
+		.text("Temperature (F)");
+		
+	
+}); //d3.csv ends here
+
+</script>
+</body>
+<footer>
+  <aside>December 12, 2018</aside>
+  <a href="https://gmallya.com" rel="author">Ganesh Mallya</a>
+</footer>

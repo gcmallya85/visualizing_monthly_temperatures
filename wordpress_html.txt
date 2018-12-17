@@ -1,0 +1,29 @@
+In the <strong><a href="https://gmallya.com/november-2018-air-temperatures/" rel="noopener">previous post</a></strong>, we looked at daily temperatures during November 2018 and compared it with daily temperatures from the past at the ACRE weather station in West Lafayette, IN. In the same <strong><a href="https://gmallya.com/november-2018-air-temperatures/" rel="noopener">post</a></strong>, I also provided a plot of annual average temperature in the climate division where the ACRE weather station is located, and the conclusion was that there was a significant increasing trend average yearly temperature over the selected climate division. All the analysis was done in R, and the R-code and data were pushed to GitHub in support of open science, promoting reproducible research, and potential future collaborations.&nbsp;&nbsp;
+
+In this post, I present an interactive visualization of the average monthly temperature over <strong><a href="https://www.ncdc.noaa.gov/monitoring-references/maps/us-climate-divisions.php" rel="nofollow noopener">Climate Division 4</a></strong> in <strong><a href="https://www.ncdc.noaa.gov/monitoring-references/maps/us-climate-divisions.php" rel="nofollow noopener">Indiana</a></strong>. The drop-down provided below the plot allows users to select the month of interest. The top three warmest years for the selected month are shown as red-hued markers, and similarly, three coldest years are denoted using blue-hued markers. Users can click on individual markers to query the exact temperature and corresponding year. I have not computed any statistics, or trend at this point, and these visualizations would be presented in the near future and presented as a separate post.
+
+The code for this post is available on <strong><a href="https://github.com/gcmallya85/visualizing_monthly_temperatures.git" rel="noopener">Github</a></strong>, so do check it out!
+
+If you use the material/media/images provided in this post for your school, academic work, news media, or social media, I encourage you to cite this post as follows:
+Mallya, Ganeshchandra. “Visualizing Monthly Temperatures.” Towards Open Science, 12/17/2018, https://gmallya.com/visualizing-monthly-temperatures/.
+
+<h1>Monthly Avg. Temperature - Climate Division 4, Indiana</h1>
+<div class="row">
+<div class="col-md-8" id="draw_area">
+		<svg></svg></div>
+<div class="col-md-4" id="draw_area2"></div>
+</div>
+<div class="row">
+<div class="col-md-2">
+<form>
+<div class="form-group">
+			  <label for="selector">Change month here:</label>
+<select class="form-control" id="selector">
+			  </select></div>
+</form>		<!-- Change month here <select id="selector"></select>-->
+
+</div>
+<div class="col-md-4"></div>
+<div class="col-md-6">
+		Click on data points for annotation.</div>
+</div>
